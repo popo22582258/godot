@@ -76,6 +76,9 @@
 #include "editor/inspector/editor_resource_tooltip_plugins.h"
 #include "editor/inspector/input_event_editor_plugin.h"
 #include "editor/inspector/sub_viewport_preview_editor_plugin.h"
+
+// MCP Server plugin
+#include "modules/mcp_server/mcp_server_plugin.h"
 #include "editor/inspector/tool_button_editor_plugin.h"
 #include "editor/scene/2d/camera_2d_editor_plugin.h"
 #include "editor/scene/2d/light_occluder_2d_editor_plugin.h"
@@ -325,6 +328,9 @@ void register_editor_types() {
 	// Required as GDExtensions can register docs at init time way before this
 	// class is actually instantiated.
 	EditorHelp::init_gdext_pointers();
+
+	// Register MCP Server plugin
+	GDREGISTER_CLASS(MCPServerPlugin);
 
 	OS::get_singleton()->benchmark_end_measure("Editor", "Register Types");
 }

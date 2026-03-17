@@ -3007,6 +3007,18 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		if (exit_err != OK) {
 			goto error;
 		}
+
+		// MCP Server - check for MCP arguments after setup2
+#if defined(TOOLS_ENABLED) && defined(MODULE_MCP_SERVER_ENABLED)
+		print_line("=== MCP Server Check ===");
+		print_line("MCP: mcp_stdio = " + String(mcp_stdio ? "true" : "false"));
+		print_line("MCP: mcp_port = " + itos(mcp_port));
+		if (mcp_stdio) {
+			print_line("MCP: Starting in stdio mode");
+		} else if (mcp_port > 0) {
+			print_line("MCP: Starting on port " + itos(mcp_port));
+		}
+#endif
 	}
 
 	return OK;

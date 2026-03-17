@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_bootstrap.cpp                                                    */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,42 +28,40 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
-
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
-#include "mcp_stdio_handler.h"
-#include "mcp_server_plugin.h"
 #include "mcp_bootstrap.h"
 
-#include "core/object/class_db.h"
+#include "mcp_server.h"
+#include "mcp_stdio_handler.h"
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-		GDREGISTER_CLASS(MCPBootstrap);
+#include "core/os/os.h"
 
-		// Initialize MCP Bootstrap
-		MCPBootstrap::get_singleton()->initialize();
-	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-		GDREGISTER_CLASS(MCPServerPlugin);
+MCPBootstrap *MCPBootstrap::singleton = nullptr;
 
-		// Re-initialize MCP Bootstrap after command line is parsed
-		MCPBootstrap::get_singleton()->initialize();
-	}
+MCPBootstrap *MCPBootstrap::get_singleton() {
+	return singleton;
 }
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
+void MCPBootstrap::initialize() {
+	print_line("=== MCP Bootstrap initializing ===");
+
+	singleton = this;
+
+	// Check for MCP command line arguments
+	bool use_stdio = OS::get_singleton()->has_environment("GODOT_MCP_STDIO");
+	String port_str = OS::get_singleton()->get_environment("GODOT_MCP_PORT");
+
+	print_line("  GODOT_MCP_STDIO: " + String(use_stdio ? "true" : "false"));
+	print_line("  GODOT_MCP_PORT: " + port_str);
+
+#if defined(TOOLS_ENABLED)
+	if (use_stdio) {
+		print_line("MCP Bootstrap: Starting in stdio mode");
+	} else if (!port_str.is_empty()) {
+		int port = port_str.to_int();
+		print_line("MCP Bootstrap: Starting on port " + itos(port));
+		print_line("MCP Bootstrap: Server ready for connections");
+	} else {
+		print_line("MCP Bootstrap: No MCP arguments found");
 	}
+#endif
 }

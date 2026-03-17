@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_bootstrap.h                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,42 +28,19 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
-#include "mcp_stdio_handler.h"
-#include "mcp_server_plugin.h"
-#include "mcp_bootstrap.h"
+#include "core/object/object.h"
 
-#include "core/object/class_db.h"
+class MCPBootstrap : public Object {
+	GDCLASS(MCPBootstrap, Object);
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-		GDREGISTER_CLASS(MCPBootstrap);
+public:
+	static MCPBootstrap *get_singleton();
 
-		// Initialize MCP Bootstrap
-		MCPBootstrap::get_singleton()->initialize();
-	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-		GDREGISTER_CLASS(MCPServerPlugin);
+	void initialize();
 
-		// Re-initialize MCP Bootstrap after command line is parsed
-		MCPBootstrap::get_singleton()->initialize();
-	}
-}
+private:
+	static MCPBootstrap *singleton;
+};
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
-	}
-}

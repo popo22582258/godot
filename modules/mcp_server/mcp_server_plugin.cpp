@@ -36,12 +36,15 @@
 #include "core/os/os.h"
 
 MCPServerPlugin::MCPServerPlugin() {
+	print_line("=== MCP Server Plugin CONSTRUCTOR ===");
 }
 
 MCPServerPlugin::~MCPServerPlugin() {
 }
 
 void MCPServerPlugin::_enter_tree() {
+	print_line("=== MCP Server Plugin _enter_tree ===");
+
 	// Check for MCP command line arguments
 	bool use_stdio = OS::get_singleton()->has_environment("GODOT_MCP_STDIO");
 	String port_str = OS::get_singleton()->get_environment("GODOT_MCP_PORT");
