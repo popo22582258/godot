@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_tool_registry.h                                                  */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,29 +28,39 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
+#include "core/object/ref_counted.h"
+#include "core/variant/dictionary.h"
+#include "core/variant/array.h"
+#include "core/string/ustring.h"
 
-#include "core/object/class_db.h"
+class MCPToolRegistry : public RefCounted {
+	GDCLASS(MCPToolRegistry, RefCounted);
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-	}
-}
+private:
+	Dictionary tools;
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
-	}
-}
+protected:
+	static void _bind_methods();
+
+public:
+	void register_tool(const String &p_name, const Dictionary &p_definition);
+	bool has_tool(const String &p_name) const;
+	Dictionary get_tool_definition(const String &p_name) const;
+	Array get_all_tool_names() const;
+	Variant call_tool(const String &p_name, const Dictionary &p_params);
+
+	// Built-in tools
+	Dictionary tool_get_errors(const Dictionary &p_params);
+	Dictionary tool_get_warnings(const Dictionary &p_params);
+	Dictionary tool_get_scene_tree(const Dictionary &p_params);
+	Dictionary tool_get_project_structure(const Dictionary &p_params);
+	Dictionary tool_run_project(const Dictionary &p_params);
+	Dictionary tool_stop_project(const Dictionary &p_params);
+	Dictionary tool_validate_script(const Dictionary &p_params);
+	Dictionary tool_list_tools(const Dictionary &p_params);
+
+	// Initialize built-in tools
+	void register_builtin_tools();
+};
