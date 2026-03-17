@@ -30,13 +30,7 @@
 
 #pragma once
 
-#include "modules/modules_enabled.gen.h"
-
-#ifdef MODULE_GDTEST_ENABLED
-
-#include "core/object/class_db.h"
+#include "modules/register_module_types.h"
 
 void initialize_gdtest_module(ModuleInitializationLevel p_level);
 void uninitialize_gdtest_module(ModuleInitializationLevel p_level);
-
-#endif // MODULE_GDTEST_ENABLED

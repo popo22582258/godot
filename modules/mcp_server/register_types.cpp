@@ -35,33 +35,12 @@
 
 #include "core/object/class_db.h"
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_node.h"
-#include "editor/settings/editor_settings.h"
-
-static void _editor_init_callback() {
-	// Register MCP server settings
-	EditorSettings *settings = EditorSettings::get_singleton();
-	if (settings) {
-		settings->add_setting("mcp_server/auto_start", false);
-		settings->add_setting("mcp_server/default_port", 6550);
-	}
-}
-#endif
-
 void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
 		GDREGISTER_CLASS(MCPServer);
 		GDREGISTER_CLASS(MCPTool);
 		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(ScriptReloader);
 	}
-
-#ifdef TOOLS_ENABLED
-	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-		EditorNode::add_init_callback(&_editor_init_callback);
-	}
-#endif
 }
 
 void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {

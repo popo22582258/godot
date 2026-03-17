@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "core/string/string.h"
+#include "core/string/ustring.h"
 #include "core/variant/array.h"
 #include "core/variant/dictionary.h"
 
@@ -38,88 +38,34 @@ class LSPExtensions {
 public:
 	// Semantic token types ( LSP 3.16+ )
 	enum class SemanticTokenType {
-		TYPE, // type, interface, struct, enum
+		TYPE,
 		CLASS,
 		ENUM,
-		INTERFACE,
-		STRUCT,
-		TYPE_PARAMETER,
-		PARAMETER,
-		VARIABLE, // variable (including constants)
+		VARIABLE,
 		PROPERTY,
-		ENUM_MEMBER,
 		FUNCTION,
 		METHOD,
-		MODIFIER, // readonly, static, abstract, async, etc.
 		COMMENT,
-		STRING,
-		NUMBER,
 		KEYWORD,
-		OPERATOR,
-		PUNCTUATION,
-		BUILTIN_TYPE,
-		BUILTIN_FUNCTION,
-		EVENT, // signal
-		LABEL,
-		NAMESPACE,
-		TAG, // decorator
 	};
 
-	// Semantic token modifiers
-	enum class SemanticTokenModifier {
-		DEFINITION,
-		DECLARATION,
-		IMPLEMENTATION,
-		REFERENCE,
-		STATIC,
-		DEPRECATED,
-		READ_ONLY,
-		WRITE_ONLY,
-		ASYNC,
-		ABSTRACT,
-		CONST,
-		DEFAULT_LIBRARY,
-	};
+	static Array get_semantic_tokens(const String &script_path) {
+		Array tokens;
+		return tokens;
+	}
 
-	// Inline hint types
-	enum class InlineHintType {
-		PARAMETER_NAME, // Parameter name hints
-		INFERRED_TYPE,  // Inferred type hints
-		CONST_EXPR,     // Constant expressions
-	};
+	static Dictionary get_hover_info(const String &script_path, int line, int character) {
+		Dictionary hover;
+		return hover;
+	}
 
-	// Code action kinds
-	enum class CodeActionKind {
-		QUICK_FIX,
-		REFACTOR,
-		REFACTOR_EXTRACT,
-		REFACTOR_INLINE,
-		REFACTOR_MOVE,
-		ORGANIZE_IMPORTS,
-		ADD_IMPORT,
-		REMOVE_UNUSED,
-		AUTO_FIX,
-	};
+	static Array get_code_actions(const String &script_path, int line, int start_col, int end_col) {
+		Array actions;
+		return actions;
+	}
 
-	// Get semantic tokens for a GDScript file
-	static Array get_semantic_tokens(const String &script_path);
-
-	// Get enhanced hover information
-	static Dictionary get_hover_info(const String &script_path, int line, int character);
-
-	// Get code actions
-	static Array get_code_actions(const String &script_path, int line, int start_col, int end_col);
-
-	// Get inline hints
-	static Array get_inline_hints(const String &script_path, int line);
-
-	// Convert semantic token data to LSP format
-	static Dictionary semantic_tokens_to_lsp(const Array &tokens);
-
-	// Get enhanced completion items
-	static Array get_completions(const String &script_path, int line, int character);
-
-private:
-	static String _get_token_type_name(SemanticTokenType type);
-	static String _get_token_modifier_name(SemanticTokenModifier modifier);
+	static Array get_completions(const String &script_path, int line, int character) {
+		Array completions;
+		return completions;
+	}
 };

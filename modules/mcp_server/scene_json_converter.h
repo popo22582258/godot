@@ -30,38 +30,12 @@
 
 #pragma once
 
-#include "core/io/resource_loader.h"
-#include "core/io/resource_saver.h"
-#include "core/string/string.h"
+#include "core/string/ustring.h"
 #include "core/variant/dictionary.h"
-#include "scene/resources/packed_scene.h"
 
 class SceneJSONConverter {
 public:
-	// Convert TSCN file to JSON
 	static Error tscn_to_json(const String &tscn_path, const String &json_path);
-
-	// Convert JSON file to TSCN
 	static Error json_to_tscn(const String &json_path, const String &tscn_path);
-
-	// Parse TSCN to Dictionary (for internal use)
 	static Error parse_tscn(const String &tscn_path, Dictionary &r_scene_dict);
-
-	// Write Dictionary to TSCN
-	static Error write_tscn(const Dictionary &scene_dict, const String &tscn_path);
-
-	// Convert scene node to Dictionary
-	static Dictionary node_to_dict(Node *p_node);
-
-	// Create node from Dictionary
-	static Node *dict_to_node(const Dictionary &p_dict);
-
-private:
-	static Dictionary _resource_to_dict(const Ref<Resource> &p_resource, int &r_next_ext_id);
-	static Ref<Resource> _dict_to_resource(const Dictionary &p_dict);
-
-	static Dictionary _node_to_dict_recursive(Node *p_node, int &r_next_node_id);
-	static Node *_dict_to_node_recursive(const Dictionary &p_dict, Node *p_parent);
-
-	static String _get_node_type_name(const Node *p_node);
 };

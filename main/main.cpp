@@ -1099,8 +1099,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	String audio_driver = "";
-	String project_path = ".";
+	String project_path = "";
 	String debug_uri = "";
+	StructuredLogger *struct_log = nullptr;
 #if defined(TOOLS_ENABLED) && (defined(WINDOWS_ENABLED) || defined(LINUXBSD_ENABLED))
 	bool test_rd_creation = false;
 	bool test_rd_support = false;
@@ -2378,8 +2379,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	// Initialize structured logger for AI-friendly JSON output
-	StructuredLogger *struct_log = memnew(StructuredLogger());
 	if (json_output) {
+		struct_log = memnew(StructuredLogger());
 		struct_log->set_json_output(true);
 		struct_log->set_stdout_plain(false);
 		OS::get_singleton()->add_logger(struct_log);

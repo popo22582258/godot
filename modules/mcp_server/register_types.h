@@ -30,13 +30,7 @@
 
 #pragma once
 
-#include "modules/modules_enabled.gen.h"
-
-#ifdef MODULE_MCP_SERVER_ENABLED
-
-#include "core/object/class_db.h"
+#include "modules/register_module_types.h"
 
 void initialize_mcp_server_module(ModuleInitializationLevel p_level);
 void uninitialize_mcp_server_module(ModuleInitializationLevel p_level);
-
-#endif // MODULE_MCP_SERVER_ENABLED

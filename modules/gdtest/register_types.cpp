@@ -37,7 +37,6 @@
 void initialize_gdtest_module(ModuleInitializationLevel p_level) {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 		GDREGISTER_CLASS(GDTest);
-		GDREGISTER_CLASS(GDTestRunner);
 		GDREGISTER_CLASS(GDTestCase);
 	}
 }

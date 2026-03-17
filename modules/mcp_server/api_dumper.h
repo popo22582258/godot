@@ -31,7 +31,7 @@
 #pragma once
 
 #include "core/object/class_db.h"
-#include "core/string/string.h"
+#include "core/string/ustring.h"
 #include "core/variant/array.h"
 #include "core/variant/dictionary.h"
 
