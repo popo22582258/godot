@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_protocol.h                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -22,33 +22,44 @@
 /* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
 /* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
 /* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY */
 /* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
+#include "core/object/ref_counted.h"
+#include "core/variant/dictionary.h"
+#include "core/variant/array.h"
+#include "core/string/ustring.h"
 
-#include "core/object/class_db.h"
+class MCPProtocol : public RefCounted {
+	GDCLASS(MCPProtocol, RefCounted);
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-	}
-}
+protected:
+	static void _bind_methods();
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
-	}
-}
+public:
+	// Parse JSON-RPC request
+	Dictionary parse_request(const String &p_json);
+
+	// Create JSON-RPC response
+	String create_response(const Variant &p_id, const Variant &p_result);
+
+	// Create JSON-RPC error response
+	String create_error_response(const Variant &p_id, int p_code, const String &p_message);
+
+	// Get tool name from request
+	String get_method(const Dictionary &p_request) const;
+
+	// Get params from request
+	Variant get_params(const Dictionary &p_request) const;
+
+	// Get request ID
+	Variant get_id(const Dictionary &p_request) const;
+
+	// Check if request is valid JSON-RPC 2.0
+	bool validate_request(const Dictionary &p_request) const;
+};

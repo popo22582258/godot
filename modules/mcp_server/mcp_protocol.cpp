@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_protocol.cpp                                                      */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,27 +28,74 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
-
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
 #include "mcp_protocol.h"
 
 #include "core/object/class_db.h"
+#include "core/io/json.h"
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-	}
+void MCPProtocol::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("parse_request", "json"), &MCPProtocol::parse_request);
+	ClassDB::bind_method(D_METHOD("create_response", "id", "result"), &MCPProtocol::create_response);
+	ClassDB::bind_method(D_METHOD("create_error_response", "id", "code", "message"), &MCPProtocol::create_error_response);
+	ClassDB::bind_method(D_METHOD("get_method", "request"), &MCPProtocol::get_method);
+	ClassDB::bind_method(D_METHOD("get_params", "request"), &MCPProtocol::get_params);
+	ClassDB::bind_method(D_METHOD("get_id", "request"), &MCPProtocol::get_id);
+	ClassDB::bind_method(D_METHOD("validate_request", "request"), &MCPProtocol::validate_request);
 }
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
+Dictionary MCPProtocol::parse_request(const String &p_json) {
+	Dictionary request;
+	Variant result = JSON::parse_string(p_json);
+	if (result.get_type() != Variant::DICTIONARY) {
+		return Dictionary();
 	}
+
+	return result;
+}
+
+String MCPProtocol::create_response(const Variant &p_id, const Variant &p_result) {
+	Dictionary response;
+	response["jsonrpc"] = "2.0";
+	response["id"] = p_id;
+	response["result"] = p_result;
+	return JSON::stringify(response);
+}
+
+String MCPProtocol::create_error_response(const Variant &p_id, int p_code, const String &p_message) {
+	Dictionary response;
+	response["jsonrpc"] = "2.0";
+	response["id"] = p_id;
+	Dictionary error;
+	error["code"] = p_code;
+	error["message"] = p_message;
+	response["error"] = error;
+	return JSON::stringify(response);
+}
+
+String MCPProtocol::get_method(const Dictionary &p_request) const {
+	return p_request.get("method", "");
+}
+
+Variant MCPProtocol::get_params(const Dictionary &p_request) const {
+	return p_request.get("params", Variant());
+}
+
+Variant MCPProtocol::get_id(const Dictionary &p_request) const {
+	return p_request.get("id", Variant());
+}
+
+bool MCPProtocol::validate_request(const Dictionary &p_request) const {
+	// Must be JSON-RPC 2.0
+	String jsonrpc = p_request.get("jsonrpc", "");
+	if (jsonrpc != "2.0") {
+		return false;
+	}
+
+	// Must have a method
+	String method = p_request.get("method", "");
+	if (method.is_empty()) {
+		return false;
+	}
+
+	return true;
 }
