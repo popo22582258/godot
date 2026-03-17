@@ -578,6 +578,10 @@ void Main::print_help(const char *p_binary) {
 	print_help_option("--lsp-port <port>", "Use the specified port for the GDScript Language Server Protocol. Recommended port range [1024, 49151].\n", CLI_OPTION_AVAILABILITY_EDITOR);
 #endif // MODULE_GDSCRIPT_ENABLED && !GDSCRIPT_NO_LSP
 #endif
+#if defined(TOOLS_ENABLED) && defined(MODULE_MCP_SERVER_ENABLED)
+	print_help_option("--mcp-port <port>", "Start MCP Server on specified port (default: 6550).\n", CLI_OPTION_AVAILABILITY_EDITOR);
+	print_help_option("--mcp-stdio", "Start MCP Server using stdio (for Claude Code).\n", CLI_OPTION_AVAILABILITY_EDITOR);
+#endif // TOOLS_ENABLED && MODULE_MCP_SERVER_ENABLED
 	print_help_option("--quit", "Quit after the first iteration.\n");
 	print_help_option("--quit-after <int>", "Quit after the given number of iterations. Set to 0 to disable.\n");
 	print_help_option("-l, --language <locale>", "Use a specific locale (<locale> being a two-letter code).\n");
@@ -2088,6 +2092,24 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				goto error;
 			}
 #endif // TOOLS_ENABLED
+#if defined(TOOLS_ENABLED) && defined(MODULE_MCP_SERVER_ENABLED)
+		} else if (arg == "--mcp-stdio") {
+			// Mark for MCP stdio mode
+			OS::get_singleton()->set_environment("GODOT_MCP_STDIO", "1");
+		} else if (arg == "--mcp-port") {
+			if (N) {
+				int mcp_port = N->get().to_int();
+				if (mcp_port < 0 || mcp_port > 65535) {
+					OS::get_singleton()->print("<port> argument for --mcp-port <port> must be between 0 and 65535.\n");
+					goto error;
+				}
+				OS::get_singleton()->set_environment("GODOT_MCP_PORT", itos(mcp_port));
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing <port> argument for --mcp-port <port>.\n");
+				goto error;
+			}
+#endif // TOOLS_ENABLED && MODULE_MCP_SERVER_ENABLED
 		} else if (arg == "--wid") {
 			if (N) {
 				init_embed_parent_window_id = N->get().to_int();
