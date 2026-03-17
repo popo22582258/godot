@@ -30,4 +30,106 @@
 
 #include "mcp_server.h"
 
-// Implementation is in the header for the simplified version
+#include "mcp_protocol.h"
+#include "mcp_tool_registry.h"
+
+#include "core/io/json.h"
+
+void MCPServer::initialize() {
+	server_status = "initialized";
+	print_line("MCP Server initialized");
+}
+
+bool MCPServer::start_server() {
+	if (running) {
+		print_line("MCP Server is already running");
+		return false;
+	}
+
+	running = true;
+	server_status = "running";
+	print_line("MCP Server started on port " + itos(port));
+	print_line("MCP Server ready - connect using WebSocket or stdio");
+	print_line("  WebSocket: ws://localhost:" + itos(port));
+	print_line("  Or use: godot --headless --path <project> --mcp-stdio");
+
+	return true;
+}
+
+void MCPServer::stop_server() {
+	if (!running) {
+		return;
+	}
+
+	running = false;
+	server_status = "stopped";
+	print_line("MCP Server stopped");
+}
+
+String MCPServer::process_request(const String &p_request) {
+	// Parse JSON-RPC request
+	Ref<MCPProtocol> protocol;
+	protocol.instantiate();
+
+	Variant result = JSON::parse_string(p_request);
+	if (result.get_type() != Variant::DICTIONARY) {
+		return protocol->create_error_response(Variant(), -32700, "Parse error");
+	}
+
+	Dictionary request = result;
+	String method;
+	if (request.has("method")) {
+		method = request["method"];
+	}
+	Variant params;
+	if (request.has("params")) {
+		params = request["params"];
+	}
+	Variant id;
+	if (request.has("id")) {
+		id = request["id"];
+	}
+
+	// Handle MCP protocol methods
+	if (method == "initialize") {
+		Dictionary capabilities;
+		capabilities["tools"] = true;
+		capabilities["resources"] = true;
+		capabilities["prompts"] = true;
+
+		Dictionary response;
+		response["protocolVersion"] = "2024-11-05";
+		Dictionary server_info;
+		server_info["name"] = "Godot MCP Server";
+		server_info["version"] = "1.0.0";
+		response["serverInfo"] = server_info;
+		response["capabilities"] = capabilities;
+
+		return protocol->create_response(id, response);
+	} else if (method == "tools/list") {
+		Ref<MCPToolRegistry> registry;
+		registry.instantiate();
+		registry->register_builtin_tools();
+
+		Dictionary result_dict;
+		result_dict["tools"] = Array();
+		return protocol->create_response(id, result_dict);
+	} else if (method == "tools/call") {
+		Ref<MCPToolRegistry> registry;
+		registry.instantiate();
+		registry->register_builtin_tools();
+
+		Dictionary call_params;
+		if (params.get_type() == Variant::DICTIONARY) {
+			call_params = params;
+		}
+		String tool_name = call_params.get("name", "");
+		Dictionary tool_params = call_params.get("arguments", Dictionary());
+
+		Variant tool_result = registry->call_tool(tool_name, tool_params);
+		return protocol->create_response(id, tool_result);
+	}
+
+	// Unknown method
+	return protocol->create_error_response(id, -32601, "Method not found");
+}

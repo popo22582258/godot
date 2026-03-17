@@ -35,6 +35,7 @@
 #include "core/string/ustring.h"
 #include "core/variant/dictionary.h"
 #include "core/variant/variant.h"
+#include "core/variant/array.h"
 
 class MCPServer : public RefCounted {
 	GDCLASS(MCPServer, RefCounted);
@@ -42,19 +43,31 @@ class MCPServer : public RefCounted {
 private:
 	int port = 6550;
 	bool running = false;
+	String server_status;
+	Array connected_clients;
 
 public:
 	void set_port(int p_port) { port = p_port; }
 	int get_port() const { return port; }
 
-	void start_server() { running = true; }
-	void stop_server() { running = false; }
+	bool start_server();
+	void stop_server();
 	bool is_running() const { return running; }
+
+	String get_server_status() const { return server_status; }
+
+	// Process a single request (for testing)
+	String process_request(const String &p_request);
+
+	// Initialize with tool registry
+	void initialize();
 
 	Dictionary get_status() const {
 		Dictionary status;
 		status["port"] = port;
 		status["running"] = running;
+		status["status"] = server_status;
+		status["clients"] = connected_clients.size();
 		return status;
 	}
 
@@ -65,7 +78,10 @@ protected:
 		ClassDB::bind_method(D_METHOD("start_server"), &MCPServer::start_server);
 		ClassDB::bind_method(D_METHOD("stop_server"), &MCPServer::stop_server);
 		ClassDB::bind_method(D_METHOD("is_running"), &MCPServer::is_running);
+		ClassDB::bind_method(D_METHOD("get_server_status"), &MCPServer::get_server_status);
 		ClassDB::bind_method(D_METHOD("get_status"), &MCPServer::get_status);
+		ClassDB::bind_method(D_METHOD("process_request", "request"), &MCPServer::process_request);
+		ClassDB::bind_method(D_METHOD("initialize"), &MCPServer::initialize);
 
 		ADD_PROPERTY(PropertyInfo(Variant::INT, "port"), "set_port", "get_port");
 		ADD_PROPERTY(PropertyInfo(Variant::BOOL, "running"), "", "is_running");
