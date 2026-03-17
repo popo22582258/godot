@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  debug_scanner.h                                                        */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,25 +28,72 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
+#include "core/object/ref_counted.h"
+#include "core/string/ustring.h"
+#include "core/variant/array.h"
+#include "core/variant/dictionary.h"
 
-#include "core/object/class_db.h"
+class DebugScanner : public RefCounted {
+	GDCLASS(DebugScanner, RefCounted);
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-	}
-}
+private:
+	bool listening = false;
+	Array errors;
+	Array warnings;
+	Array script_errors;
+	Array shader_errors;
+	int error_count = 0;
+	int warning_count = 0;
+	int script_error_count = 0;
+	int shader_error_count = 0;
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
-	}
-}
+public:
+	static void _bind_methods();
+
+	// Start listening for errors
+	void start_listening();
+
+	// Stop listening for errors
+	void stop_listening();
+
+	// Get all errors
+	Array get_errors() const;
+
+	// Get all warnings
+	Array get_warnings() const;
+
+	// Get script errors
+	Array get_script_errors() const;
+
+	// Get shader errors
+	Array get_shader_errors() const;
+
+	// Clear all cached errors
+	void clear_errors();
+
+	// Get statistics
+	Dictionary get_statistics() const;
+
+	// Check if currently listening
+	bool is_listening() const;
+
+	// Add an error programmatically (for testing/manual use)
+	void add_error(const String &p_message, const String &p_source, int p_line, const String &p_error_code);
+
+	// Add a warning programmatically
+	void add_warning(const String &p_message, const String &p_source, int p_line, const String &p_warning_code);
+
+	// Get error by index
+	Dictionary get_error(int p_index) const;
+
+	// Get warning by index
+	Dictionary get_warning(int p_index) const;
+
+	// Get total count of all issues
+	int get_total_issue_count() const;
+
+	// Export errors to JSON format
+	String to_json() const;
+};

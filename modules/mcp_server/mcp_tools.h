@@ -63,4 +63,50 @@ public:
 		result["diagnostics"] = Array();
 		return result;
 	}
+
+	// Debug scanner methods
+	static Dictionary get_all_errors() {
+		Dictionary result;
+		result["errors"] = Array();
+		result["warnings"] = Array();
+		result["script_errors"] = Array();
+		result["shader_errors"] = Array();
+		result["statistics"] = Dictionary();
+		return result;
+	}
+
+	static Dictionary validate_and_fix(const String &script_path) {
+		Dictionary result;
+		result["valid"] = true;
+		result["fixed"] = false;
+		result["errors"] = Array();
+		result["suggestions"] = Array();
+		return result;
+	}
+
+	static Dictionary get_error_context(const String &error_json) {
+		Dictionary result;
+		result["file"] = "";
+		result["line"] = -1;
+		result["column"] = -1;
+		result["function"] = "";
+		result["code_snippet"] = "";
+		result["suggestion"] = "";
+		return result;
+	}
+
+	static Array get_recent_console_output(int p_lines = 100) {
+		Array result;
+		return result;
+	}
+
+	static Dictionary analyze_performance_issues() {
+		Dictionary result;
+		result["frame_time_ms"] = 0.0;
+		result["script_time_ms"] = 0.0;
+		result["physics_time_ms"] = 0.0;
+		result["render_time_ms"] = 0.0;
+		result["warnings"] = Array();
+		return result;
+	}
 };
