@@ -47,6 +47,7 @@
 #include "core/io/image.h"
 #include "core/io/image_loader.h"
 #include "core/io/resource_loader.h"
+#include "core/io/structured_logger.h"
 #include "core/object/class_db.h"
 #include "core/object/message_queue.h"
 #include "core/object/script_language.h"
@@ -215,6 +216,17 @@ static bool project_manager = false;
 static bool cmdline_tool = false;
 static String locale;
 static String log_file;
+static bool json_output = false;
+static bool mcp_stdio = false;
+static int mcp_port = 6550;
+static bool validate_scripts = false;
+static bool lint_gdscript = false;
+static String dump_api_json_path;
+static String run_tests_path;
+static String tscn_to_json_input;
+static String tscn_to_json_output;
+static String json_to_tscn_input;
+static String json_to_tscn_output;
 static bool show_help = false;
 static uint64_t quit_after = 0;
 static ProcessID editor_pid = 0;
@@ -618,6 +630,18 @@ void Main::print_help(const char *p_binary) {
 	print_help_option("--text-driver <driver>", "Text driver (used for font rendering, bidirectional support and shaping).\n");
 	print_help_option("--tablet-driver <driver>", "Pen tablet input driver.\n");
 	print_help_option("--headless", "Enable headless mode (--display-driver headless --audio-driver Dummy). Useful for servers and with --script.\n");
+
+	// AI-Friendly CLI options (structured output)
+	print_help_option("--json-output", "Enable JSON Lines output format for machine-readable logging.\n");
+	print_help_option("--mcp-stdio", "Enable MCP server over stdio for Claude Code integration.\n");
+	print_help_option("--mcp-port <port>", "Enable MCP server over WebSocket on specified port (default: 6550).\n");
+	print_help_option("--validate-scripts", "Validate all GDScripts in the project and exit.\n");
+	print_help_option("--lint-gdscript", "Run static analysis on GDScripts and exit.\n");
+	print_help_option("--dump-api-json <path>", "Dump Godot API to JSON file and exit.\n");
+	print_help_option("--run-tests [path]", "Run GDScript unit tests and exit. Optionally specify test directory.\n");
+	print_help_option("--tscn-to-json <input> <output>", "Convert TSCN scene file to JSON format.\n");
+	print_help_option("--json-to-tscn <input> <output>", "Convert JSON scene file to TSCN format.\n");
+
 	print_help_option("--log-file <file>", "Write output/error log to the specified path instead of the default location defined by the project.\n");
 	print_help_option("", "<file> path should be absolute or relative to the project directory.\n");
 	print_help_option("--write-movie <file>", "Write a video to the specified path (usually with .avi or .png extension).\n");
@@ -1471,6 +1495,74 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			audio_driver = NULL_AUDIO_DRIVER;
 			display_driver = NULL_DISPLAY_DRIVER;
 
+		} else if (arg == "--json-output") { // Enable JSON Lines output
+			json_output = true;
+
+		} else if (arg == "--mcp-stdio") { // Enable MCP server over stdio
+			mcp_stdio = true;
+
+		} else if (arg == "--mcp-port") { // MCP server port
+			if (N) {
+				mcp_port = N->get().to_int();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing MCP port argument, aborting.\n");
+				goto error;
+			}
+
+		} else if (arg == "--validate-scripts") { // Validate all GDScripts
+			validate_scripts = true;
+
+		} else if (arg == "--lint-gdscript") { // Lint GDScripts
+			lint_gdscript = true;
+
+		} else if (arg == "--dump-api-json") { // Dump API to JSON
+			if (N) {
+				dump_api_json_path = N->get();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing API JSON output path, aborting.\n");
+				goto error;
+			}
+
+		} else if (arg == "--run-tests") { // Run GDScript tests
+			if (N && !N->get().begins_with("-")) {
+				run_tests_path = N->get();
+				N = N->next();
+			}
+
+		} else if (arg == "--tscn-to-json") { // Convert TSCN to JSON
+			if (N) {
+				tscn_to_json_input = N->get();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing input TSCN file, aborting.\n");
+				goto error;
+			}
+			if (N) {
+				tscn_to_json_output = N->get();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing output JSON file, aborting.\n");
+				goto error;
+			}
+
+		} else if (arg == "--json-to-tscn") { // Convert JSON to TSCN
+			if (N) {
+				json_to_tscn_input = N->get();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing input JSON file, aborting.\n");
+				goto error;
+			}
+			if (N) {
+				json_to_tscn_output = N->get();
+				N = N->next();
+			} else {
+				OS::get_singleton()->print("Missing output TSCN file, aborting.\n");
+				goto error;
+			}
+
 		} else if (arg == "--embedded") { // Enable embedded mode.
 #ifdef MACOS_ENABLED
 			display_driver = EMBEDDED_DISPLAY_DRIVER;
@@ -2283,6 +2375,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			max_files = GLOBAL_GET("debug/file_logging/max_log_files");
 		}
 		OS::get_singleton()->add_logger(memnew(RotatedFileLogger(base_path, max_files)));
+	}
+
+	// Initialize structured logger for AI-friendly JSON output
+	StructuredLogger *struct_log = memnew(StructuredLogger());
+	if (json_output) {
+		struct_log->set_json_output(true);
+		struct_log->set_stdout_plain(false);
+		OS::get_singleton()->add_logger(struct_log);
 	}
 
 	if (main_args.is_empty() && String(GLOBAL_GET("application/run/main_scene")) == "") {
