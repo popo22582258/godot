@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_server_plugin.h                                                   */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,34 +28,25 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
+#pragma once
 
+#include "editor/plugins/editor_plugin.h"
 #include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
 #include "mcp_stdio_handler.h"
-#include "mcp_server_plugin.h"
 
-#include "core/object/class_db.h"
+class MCPServerPlugin : public EditorPlugin {
+	GDCLASS(MCPServerPlugin, EditorPlugin);
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-		GDREGISTER_CLASS(MCPServerPlugin);
-	}
-}
+private:
+	Ref<MCPServer> mcp_server;
+	Ref<MCPStdioHandler> stdio_handler;
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
-	}
-}
+public:
+	MCPServerPlugin();
+	~MCPServerPlugin();
+
+	void _enter_tree();
+	void _exit_tree();
+
+	String get_plugin_name() const override { return "MCPServer"; }
+};

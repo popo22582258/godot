@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_server_plugin.cpp                                                 */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,34 +28,54 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
-
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
-#include "mcp_stdio_handler.h"
 #include "mcp_server_plugin.h"
 
-#include "core/object/class_db.h"
+#include "mcp_server.h"
+#include "mcp_stdio_handler.h"
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-		GDREGISTER_CLASS(MCPServerPlugin);
+#include "core/os/os.h"
+
+MCPServerPlugin::MCPServerPlugin() {
+}
+
+MCPServerPlugin::~MCPServerPlugin() {
+}
+
+void MCPServerPlugin::_enter_tree() {
+	// Check for MCP command line arguments
+	bool use_stdio = OS::get_singleton()->has_environment("GODOT_MCP_STDIO");
+	String port_str = OS::get_singleton()->get_environment("GODOT_MCP_PORT");
+
+	print_line("MCP Server Plugin: Checking for MCP arguments...");
+	print_line("  GODOT_MCP_STDIO: " + String(use_stdio ? "true" : "false"));
+	print_line("  GODOT_MCP_PORT: " + port_str);
+
+	if (use_stdio) {
+		// Start in stdio mode
+		mcp_server.instantiate();
+		mcp_server->initialize();
+
+		stdio_handler.instantiate();
+		stdio_handler->start();
+		print_line("MCP Server started in stdio mode");
+	} else if (!port_str.is_empty()) {
+		// Start in WebSocket mode
+		int port = port_str.to_int();
+		mcp_server.instantiate();
+		mcp_server->set_port(port);
+		mcp_server->start_server();
+		print_line("MCP Server started on port " + itos(port));
+	} else {
+		print_line("MCP Server Plugin: No MCP arguments found, MCP Server not started");
+		print_line("  Use --mcp-port <port> or --mcp-stdio to start MCP Server");
 	}
 }
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
+void MCPServerPlugin::_exit_tree() {
+	if (mcp_server.is_valid()) {
+		mcp_server->stop_server();
+	}
+	if (stdio_handler.is_valid()) {
+		stdio_handler->stop();
 	}
 }
