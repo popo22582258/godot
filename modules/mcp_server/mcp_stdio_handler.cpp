@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_stdio_handler.cpp                                                 */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,31 +28,48 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
-
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
 #include "mcp_stdio_handler.h"
 
-#include "core/object/class_db.h"
+#include "mcp_server.h"
+#include "mcp_protocol.h"
+#include "mcp_tool_registry.h"
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-	}
-}
+#include "core/io/json.h"
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
+void MCPStdioHandler::start() {
+	if (running) {
 		return;
 	}
+
+	running = true;
+	server_status = "running";
+
+	// Print MCP Server ready message to stdout
+	print_line("MCP Server started in stdio mode");
+	print_line("Ready for JSON-RPC requests");
+	print_line("---");
+}
+
+void MCPStdioHandler::stop() {
+	if (!running) {
+		return;
+	}
+
+	running = false;
+	server_status = "stopped";
+	print_line("MCP Server stopped");
+}
+
+String MCPStdioHandler::process_line(const String &p_line) {
+	if (p_line.is_empty()) {
+		return "";
+	}
+
+	// Create MCP Server to handle the request
+	Ref<MCPServer> server;
+	server.instantiate();
+	server->initialize();
+
+	// Process the request
+	return server->process_request(p_line);
 }

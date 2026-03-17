@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  register_types.cpp                                                    */
+/*  mcp_stdio_handler.h                                                   */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,31 +28,35 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "register_types.h"
-
-#include "mcp_server.h"
-#include "hot_reload_helper.h"
-#include "debug_scanner.h"
-#include "mcp_protocol.h"
-#include "mcp_tool_registry.h"
-#include "mcp_stdio_handler.h"
+#pragma once
 
 #include "core/object/class_db.h"
+#include "core/object/ref_counted.h"
+#include "core/string/ustring.h"
+#include "core/variant/dictionary.h"
 
-void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
-		GDREGISTER_CLASS(MCPServer);
-		GDREGISTER_CLASS(MCPTool);
-		GDREGISTER_CLASS(HotReloadHelper);
-		GDREGISTER_CLASS(DebugScanner);
-		GDREGISTER_CLASS(MCPProtocol);
-		GDREGISTER_CLASS(MCPToolRegistry);
-		GDREGISTER_CLASS(MCPStdioHandler);
-	}
-}
+class MCPStdioHandler : public RefCounted {
+	GDCLASS(MCPStdioHandler, RefCounted);
 
-void uninitialize_mcp_server_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_CORE) {
-		return;
+private:
+	bool running = false;
+	String server_status;
+
+public:
+	void start();
+	void stop();
+	bool is_running() const { return running; }
+	String get_status() const { return server_status; }
+
+	// Process a single line from stdin
+	String process_line(const String &p_line);
+
+protected:
+	static void _bind_methods() {
+		ClassDB::bind_method(D_METHOD("start"), &MCPStdioHandler::start);
+		ClassDB::bind_method(D_METHOD("stop"), &MCPStdioHandler::stop);
+		ClassDB::bind_method(D_METHOD("is_running"), &MCPStdioHandler::is_running);
+		ClassDB::bind_method(D_METHOD("get_status"), &MCPStdioHandler::get_status);
+		ClassDB::bind_method(D_METHOD("process_line", "line"), &MCPStdioHandler::process_line);
 	}
-}
+};
