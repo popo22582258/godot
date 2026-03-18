@@ -202,7 +202,12 @@ Dictionary MCPToolRegistry::tool_orchestrator_create_script(const Dictionary &p_
 	}
 
 	// Generate a basic Orchestrator script template
-	String script_content = "[orchestration type=\"OScript\" load_steps=2 format=3 uid=\"uid://" + String::generate_random_uuid() + "\"]\n\n";
+	// Generate a simple UUID-like string
+	String uuid;
+	for (int i = 0; i < 16; i++) {
+		uuid += String::num_int64(Math::rand() % 16, 16).to_upper();
+	}
+	String script_content = "[orchestration type=\"OScript\" load_steps=2 format=3 uid=\"uid://" + uuid + "\"]\n\n";
 	script_content += "[resource]\n";
 	script_content += "base_type = &\"" + base_type + "\"\n";
 	script_content += "brief_description = \"" + name + " - Created via MCP\"\n";
