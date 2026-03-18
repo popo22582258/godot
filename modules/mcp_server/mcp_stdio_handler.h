@@ -34,6 +34,10 @@
 #include "core/object/ref_counted.h"
 #include "core/string/ustring.h"
 #include "core/variant/dictionary.h"
+#include "core/templates/local_vector.h"
+
+// Forward declaration
+class MCPServer;
 
 class MCPStdioHandler : public RefCounted {
 	GDCLASS(MCPStdioHandler, RefCounted);
@@ -41,6 +45,13 @@ class MCPStdioHandler : public RefCounted {
 private:
 	bool running = false;
 	String server_status;
+	Ref<MCPServer> server;
+
+	// For stdin reading
+	Thread *stdio_thread = nullptr;
+	bool thread_should_stop = false;
+	LocalVector<String> request_queue;
+	Mutex queue_mutex;
 
 public:
 	void start();
@@ -51,6 +62,14 @@ public:
 	// Process a single line from stdin
 	String process_line(const String &p_line);
 
+	// Get the server instance
+	Ref<MCPServer> get_server() const { return server; }
+
+private:
+	// Thread function for reading stdin
+	static void _stdio_thread_func(void *p_userdata);
+	void read_stdin_loop();
+
 protected:
 	static void _bind_methods() {
 		ClassDB::bind_method(D_METHOD("start"), &MCPStdioHandler::start);
@@ -58,5 +77,6 @@ protected:
 		ClassDB::bind_method(D_METHOD("is_running"), &MCPStdioHandler::is_running);
 		ClassDB::bind_method(D_METHOD("get_status"), &MCPStdioHandler::get_status);
 		ClassDB::bind_method(D_METHOD("process_line", "line"), &MCPStdioHandler::process_line);
+		ClassDB::bind_method(D_METHOD("get_server"), &MCPStdioHandler::get_server);
 	}
 };

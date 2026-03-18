@@ -52,13 +52,16 @@ void initialize_mcp_server_module(ModuleInitializationLevel p_level) {
 		GDREGISTER_CLASS(MCPStdioHandler);
 		GDREGISTER_CLASS(MCPBootstrap);
 
-		// Initialize MCP Bootstrap
-		MCPBootstrap::get_singleton()->initialize();
+		// Create and initialize MCP Bootstrap singleton
+		MCPBootstrap *bootstrap = memnew(MCPBootstrap());
+		bootstrap->initialize();
 	} else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
 		GDREGISTER_CLASS(MCPServerPlugin);
 
 		// Re-initialize MCP Bootstrap after command line is parsed
-		MCPBootstrap::get_singleton()->initialize();
+		if (MCPBootstrap::get_singleton()) {
+			MCPBootstrap::get_singleton()->initialize();
+		}
 	}
 }
 

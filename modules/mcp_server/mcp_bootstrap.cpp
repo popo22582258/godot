@@ -65,3 +65,24 @@ void MCPBootstrap::initialize() {
 	}
 #endif
 }
+
+void MCPBootstrap::start_mcp_if_needed() {
+#if defined(TOOLS_ENABLED)
+	// Check for MCP command line arguments
+	bool use_stdio = OS::get_singleton()->has_environment("GODOT_MCP_STDIO");
+	String port_str = OS::get_singleton()->get_environment("GODOT_MCP_PORT");
+
+	if (use_stdio) {
+		print_line("MCP Bootstrap: Starting stdio handler...");
+		Ref<MCPStdioHandler> stdio_handler;
+		stdio_handler.instantiate();
+		stdio_handler->start();
+		print_line("MCP Bootstrap: Stdio handler started");
+	} else if (!port_str.is_empty()) {
+		int port = port_str.to_int();
+		print_line("MCP Bootstrap: Starting WebSocket server on port " + itos(port));
+		// TODO: Start WebSocket server
+		print_line("MCP Bootstrap: WebSocket server ready");
+	}
+#endif
+}

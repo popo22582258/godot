@@ -40,6 +40,9 @@ public:
 
 	void initialize();
 
+	// Start MCP server based on environment variables (call after main.cpp sets them)
+	void start_mcp_if_needed();
+
 private:
 	static MCPBootstrap *singleton;
 };

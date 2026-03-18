@@ -31,6 +31,12 @@
 #include "main.h"
 
 #include "core/config/engine.h"
+
+#ifdef TOOLS_ENABLED
+// Try to include MCP Bootstrap if available
+// This will only work if the module is compiled in
+// We use a try-catch approach via preprocessor
+#endif
 #include "core/config/project_settings.h"
 #include "core/core_globals.h"
 #include "core/crypto/crypto.h"
@@ -142,6 +148,10 @@
 #endif
 
 #include "modules/modules_enabled.gen.h" // For mono.
+
+#if defined(TOOLS_ENABLED) && defined(MODULE_MCP_SERVER_ENABLED)
+#include "modules/mcp_server/mcp_bootstrap.h"
+#endif
 
 #if defined(MODULE_MONO_ENABLED) && defined(TOOLS_ENABLED)
 #include "modules/mono/editor/bindings_generator.h"
@@ -3013,10 +3023,20 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		print_line("=== MCP Server Check ===");
 		print_line("MCP: mcp_stdio = " + String(mcp_stdio ? "true" : "false"));
 		print_line("MCP: mcp_port = " + itos(mcp_port));
+
+		// Set environment variables and start MCP server
 		if (mcp_stdio) {
+			OS::get_singleton()->set_environment("GODOT_MCP_STDIO", "1");
 			print_line("MCP: Starting in stdio mode");
-		} else if (mcp_port > 0) {
+		}
+		if (mcp_port > 0) {
+			OS::get_singleton()->set_environment("GODOT_MCP_PORT", itos(mcp_port));
 			print_line("MCP: Starting on port " + itos(mcp_port));
+		}
+
+		// Start MCP server if needed
+		if (MCPBootstrap::get_singleton()) {
+			MCPBootstrap::get_singleton()->start_mcp_if_needed();
 		}
 #endif
 	}
