@@ -61,6 +61,16 @@ public:
 	Dictionary tool_validate_script(const Dictionary &p_params);
 	Dictionary tool_list_tools(const Dictionary &p_params);
 
+	// Orchestrator tools
+	Dictionary tool_orchestrator_create_script(const Dictionary &p_params);
+	Dictionary tool_orchestrator_list_scripts(const Dictionary &p_params);
+	Dictionary tool_orchestrator_get_script_info(const Dictionary &p_params);
+	Dictionary tool_orchestrator_list_node_types(const Dictionary &p_params);
+	Dictionary tool_orchestrator_add_node(const Dictionary &p_params);
+	Dictionary tool_orchestrator_connect_nodes(const Dictionary &p_params);
+	Dictionary tool_orchestrator_execute(const Dictionary &p_params);
+
 	// Initialize built-in tools
 	void register_builtin_tools();
+	void register_orchestrator_tools();
 };
